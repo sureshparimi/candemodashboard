@@ -2,25 +2,15 @@ import streamlit as st
 import pandas as pd
 import requests
 import base64
+import os
 import plotly.graph_objects as go
 
+# Constants
+USERNAME = os.environ.get("USERNAME")
+API_TOKEN = os.environ.get("API_TOKEN")
+BASE_URL = os.environ.get("BASE_URL")
 
-# Everything is accessible via the st.secrets dict:
-st.write("USERNAME:", st.secrets["USERNAME"])
-st.write("API_TOKEN:", st.secrets["API_TOKEN"])
-st.write("BASE_URL:", st.secrets["BASE_URL"])
-
-
-# Set page configuration
-st.set_page_config(
-    page_title="Dashboard",
-    page_icon=":bar_chart:",
-    layout="wide",
-    initial_sidebar_state="expanded",
-)
-st.markdown("<style> footer {visibility: hidden;} </style>", unsafe_allow_html=True)
-
-# Functions (unchanged)
+# Functions
 def fetch_data(url, params=None):
     auth_str = f"{USERNAME}:{API_TOKEN}"
     encoded_auth = base64.b64encode(auth_str.encode()).decode()
@@ -152,6 +142,14 @@ def display_insight(insight, df):
         st.plotly_chart(fig)
 
 def main():
+    st.set_page_config(
+        page_title="Dashboard",
+        page_icon=":bar_chart:",
+        layout="wide",
+        initial_sidebar_state="expanded",
+    )
+    st.markdown("<style> footer {visibility: hidden;} </style>", unsafe_allow_html=True)
+
     projects = get_projects()
     if not projects:
         st.error("Error fetching projects.")
@@ -197,7 +195,11 @@ def main():
         st.write(f"Fix Version selected: {selected_fix_version}")
 
         # Display KPI Metrics
-        display_kpi_metrics(df)
+        col1, col2, col3, col4 = st.columns(4)
+        col1.metric("Total issue count", df.shape[0])
+        col2.metric("Total Stories", df[df['Type'] == 'Story'].shape[0])
+        col3.metric("Total Defects", df[df['Type'] == 'Defect'].shape[0])
+        col4.metric("Total Epics", df[df['Type'] == 'Epic'].shape[0])
 
         # Display Dataframe
         st.subheader("Dataframe:")
@@ -210,20 +212,6 @@ def main():
             cols = st.columns(len(insights_pair))
             for col, insight in zip(cols, insights_pair):
                 display_insight(insight, df)
-
-# Navigation bar HTML code
-nav_html = """
-<div style="background-color: #4CAF50; padding: 10px;">
-  <a href="https://dashboard1.com" target="_blank" style="color: white; padding: 0 10px;">Dashboard 1</a>
-  <a href="https://dashboard2.com" target="_blank" style="color: white; padding: 0 10px;">Dashboard 2</a>
-  <a href="https://dashboard3.com" target="_blank" style="color: white; padding: 0 10px;">Dashboard 3</a>
-  <a href="https://dashboard4.com" target="_blank" style="color: white; padding: 0 10px;">Dashboard 4</a>
-  <a href="https://dashboard5.com" target="_blank" style="color: white; padding: 0 10px;">Dashboard 5</a>
-</div>
-"""
-
-# Render navigation bar
-st.markdown(nav_html, unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
