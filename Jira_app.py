@@ -10,6 +10,7 @@ USERNAME = os.environ.get("USER_NAME")
 API_TOKEN = os.environ.get("API_TOKEN")
 BASE_URL = os.environ.get("BASE_URL")
 
+
 # Functions
 def fetch_data(url, params=None):
     auth_str = f"{USERNAME}:{API_TOKEN}"
@@ -190,9 +191,23 @@ def main():
         st.markdown('---')  # Add a horizontal line
 
         # Display Projects selected and Fix Version selected
-        st.subheader("Selected Filters:")
-        st.write(f"Projects selected: {', '.join([projects[key] for key in selected_project_keys])}")
-        st.write(f"Fix Version selected: {selected_fix_version}")
+
+
+  # Center-aligned and styled subheader with rounded corner purple background
+        st.markdown(
+            f'<div style="background-color: purple; padding: 10px; border-radius: 10px; text-align:center;"><h3 style="color:white;"><b>Project Pulse: Jira Data</b></h3></div>',
+            unsafe_allow_html=True
+        )
+
+        # Projects selected and Fix Version selected in one row
+        st.markdown(
+            f'<div style="display: flex; flex-wrap: wrap; gap: 10px;">'
+            f'<div style="background-color: orange; display: inline-block; padding: 5px 10px; border-radius: 5px;"><p style="color:white;"><b>Projects selected:</b> {", ".join([projects[key] for key in selected_project_keys])}</p></div>'
+            f'<div style="background-color: orange; display: inline-block; padding: 5px 10px; border-radius: 5px;"><p style="color:white;"><b>Fix Version selected:</b> {selected_fix_version}</p></div>'
+            f'</div>',
+            unsafe_allow_html=True
+        )
+
 
         # Display KPI Metrics
         col1, col2, col3, col4 = st.columns(4)
@@ -202,7 +217,7 @@ def main():
         col4.metric("Total Epics", df[df['Type'] == 'Epic'].shape[0])
 
         # Display Dataframe
-        st.subheader("Dataframe:")
+        st.subheader("Data Summary:")
         st.write(df)
 
         # Display Insights
