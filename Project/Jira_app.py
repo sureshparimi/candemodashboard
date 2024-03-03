@@ -4,10 +4,7 @@ import requests
 import base64
 import plotly.graph_objects as go
 
-# Constants
-USERNAME = "suresh.parimi@canon-europe.com"
-API_TOKEN = "ATATT3xFfGF0IcnGXGU2XFNJDEw0jSb5IKDW2dfRrAeFxXsJUBLal9jWq4OxlCMcyng0Ri3SbGQbxlg797Qk0DCpjyjDbsQP8kh9m78yBANPbUjsiHTc_8hbVdZ4LdT4QKTjzX3wwt8U6HCLSD62zz9nyLJLGFzQod8hT2ibNcjOY0G3SUU28CM=7BC0CD94"
-BASE_URL = "https://canon-enterprise-it.atlassian.net"
+
 
 # Set page configuration
 st.set_page_config(
