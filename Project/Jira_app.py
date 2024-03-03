@@ -5,6 +5,11 @@ import base64
 import plotly.graph_objects as go
 
 
+# Everything is accessible via the st.secrets dict:
+st.write("USERNAME:", st.secrets["USERNAME"])
+st.write("API_TOKEN:", st.secrets["API_TOKEN"])
+st.write("BASE_URL:", st.secrets["BASE_URL"])
+
 
 # Set page configuration
 st.set_page_config(
