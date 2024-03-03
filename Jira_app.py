@@ -6,7 +6,7 @@ import os
 import plotly.graph_objects as go
 
 # Constants
-USERNAME = os.environ.get("USERNAME")
+USERNAME = os.environ.get("USER_NAME")
 API_TOKEN = os.environ.get("API_TOKEN")
 BASE_URL = os.environ.get("BASE_URL")
 
