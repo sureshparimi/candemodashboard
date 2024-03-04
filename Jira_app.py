@@ -35,6 +35,7 @@ def get_issues(jql):
     return fetch_data(url, params).get('issues', [])
 
 def fetch_issue_data(issue):
+    jira_key = None
     try:
         cat_scope = issue['fields'].get('customfield_10079', {}).get('value', "Not updated")
         jira_key = issue.get('key', "Unknown")
@@ -210,12 +211,15 @@ def main():
 
 
         # Display KPI Metrics
-        col1, col2, col3, col4 = st.columns(4)
-        col1.metric("Total issue count", df.shape[0])
-        col2.metric("Total Stories", df[df['Type'] == 'Story'].shape[0])
-        col3.metric("Total Defects", df[df['Type'] == 'Defect'].shape[0])
-        col4.metric("Total Epics", df[df['Type'] == 'Epic'].shape[0])
-
+        if 'Type' in df:
+            col1, col2, col3, col4 = st.columns(4)
+            col1.metric("Total issue count", df.shape[0])
+            col2.metric("Total Stories", df[df['Type'] == 'Story'].shape[0])
+            col3.metric("Total Defects", df[df['Type'] == 'Defect'].shape[0])
+            col4.metric("Total Epics", df[df['Type'] == 'Epic'].shape[0])
+        else:
+            st.warning(f"No data found for the selected project(s): {', '.join([projects[key] for key in selected_project_keys])} and fix version '{selected_fix_version}'.")
+            return
         # Display Dataframe
         st.subheader("Data Summary:")
         st.write(df)
