@@ -4,12 +4,15 @@ import requests
 import base64
 import os
 import plotly.graph_objects as go
+import numpy as np
 
 # Constants
 USERNAME = os.environ.get("USER_NAME")
 API_TOKEN = os.environ.get("API_TOKEN")
 BASE_URL = os.environ.get("BASE_URL")
 
+# PowerBI style modern colors
+colors = ['#3498db', '#2ecc71', '#f39c12', '#9b59b6', '#34495e', '#e74c3c', '#1abc9c', '#f1c40f']
 
 # Functions
 def fetch_data(url, params=None):
@@ -35,7 +38,6 @@ def get_issues(jql):
     return fetch_data(url, params).get('issues', [])
 
 def fetch_issue_data(issue):
-    jira_key = None
     try:
         cat_scope = issue['fields'].get('customfield_10079', {}).get('value', "Not updated")
         jira_key = issue.get('key', "Unknown")
@@ -61,7 +63,7 @@ def fetch_issue_data(issue):
             comments += "Error: Project is missing. "
         if it_portal_sr_cr == "Not updated":
             comments += "Error: IT Portal / SR / CR is missing. "
-
+        
         return {
             'JIRA Key': jira_key,
             'Summary': summary,
@@ -74,9 +76,12 @@ def fetch_issue_data(issue):
             'Comments': comments if comments else ""  
         }
     except Exception as e:
+        error_message = str(e)
+        if hasattr(e, 'response') and e.response and 'errorMessages' in e.response.json():
+            error_message = ", ".join(e.response.json()['errorMessages'])
         return {
-            'JIRA Key': jira_key,
-            'Comments': f"Error in 'fetch_issue_data': {e}"
+            'JIRA Key': "Unknown",
+            'Comments': f"Error in 'fetch_issue_data': {error_message}"
         }
 
 def process_issues(selected_fix_versions, selected_project_keys):
@@ -88,69 +93,52 @@ def process_issues(selected_fix_versions, selected_project_keys):
             data.extend([fetch_issue_data(issue) for issue in issues])
     return pd.DataFrame(data)
 
-def display_kpi_metrics(df):
-    st.header("KPI Metrics")
-
-    # Total Issue Count
-    total_issue_count = df.shape[0]
-    st.metric("Total issue count", total_issue_count)
-
-    # Total Stories
-    stories_df = df[df['Type'] == 'Story']
-    total_stories = stories_df.shape[0]
-    st.metric("Total Stories", total_stories)
-
-    # Total Defects
-    defects_df = df[df['Type'] == 'Defect']
-    total_defects = defects_df.shape[0]
-    st.metric("Total Defects", total_defects)
-
-    # Total Epics
-    epics_df = df[df['Type'] == 'Epic']
-    total_epics = epics_df.shape[0]
-    st.metric("Total Epics", total_epics)
-
 def display_insight(insight, df):
     st.subheader(insight)
     if insight == 'Issue Distribution by Type':
         issue_type_count = df['Type'].value_counts()
-        fig = go.Figure(data=[go.Bar(x=issue_type_count.index, y=issue_type_count.values)])
-        fig.update_layout(title='Issue Distribution by Type', xaxis_title='Issue Type', yaxis_title='Count', template='plotly_dark')
+        fig = go.Figure(data=[go.Bar(x=issue_type_count.index, y=issue_type_count.values, orientation='h')])
+        fig.update_layout(title='Issue Distribution by Type', yaxis_title='Issue Type', xaxis_title='Count', template='plotly_dark')
+        fig.update_traces(marker=dict(color=colors))
         st.plotly_chart(fig)
     elif insight == 'Issue Status Distribution':
         status_count = df['Status'].value_counts()
-        fig = go.Figure(data=[go.Bar(x=status_count.index, y=status_count.values)])
-        fig.update_layout(title='Issue Status Distribution', xaxis_title='Issue Status', yaxis_title='Count', template='plotly_dark')
+        fig = go.Figure(data=[go.Bar(x=status_count.values, y=status_count.index, orientation='h')])
+        fig.update_layout(title='Issue Status Distribution', yaxis_title='Issue Status', xaxis_title='Count', template='plotly_dark')
+        fig.update_traces(marker=dict(color=colors))
         st.plotly_chart(fig)
     elif insight == 'Fix Version Status':
         fix_version_count = df['Fix Version'].value_counts()
-        fig = go.Figure(data=[go.Bar(x=fix_version_count.index, y=fix_version_count.values)])
-        fig.update_layout(title='Fix Version Status', xaxis_title='Fix Version', yaxis_title='Count', template='plotly_dark')
+        fig = go.Figure(data=[go.Bar(x=fix_version_count.values, y=fix_version_count.index, orientation='h')])
+        fig.update_layout(title='Fix Version Status', yaxis_title='Fix Version', xaxis_title='Count', template='plotly_dark')
+        fig.update_traces(marker=dict(color=colors))
         st.plotly_chart(fig)
     elif insight == 'Project-wise Issue Count':
         project_count = df['Project'].value_counts()
-        fig = go.Figure(data=[go.Bar(x=project_count.index, y=project_count.values)])
-        fig.update_layout(title='Project-wise Issue Count', xaxis_title='Project', yaxis_title='Count', template='plotly_dark')
+        fig = go.Figure(data=[go.Bar(x=project_count.values, y=project_count.index, orientation='h')])
+        fig.update_layout(title='Project-wise Issue Count', yaxis_title='Project', xaxis_title='Count', template='plotly_dark')
+        fig.update_traces(marker=dict(color=colors))
         st.plotly_chart(fig)
     elif insight == 'Issue Distribution by CAT Scope':
         cat_scope_count = df['CAT Scope'].value_counts()
-        fig = go.Figure(data=[go.Bar(x=cat_scope_count.index, y=cat_scope_count.values)])
-        fig.update_layout(title='Issue Distribution by CAT Scope', xaxis_title='CAT Scope', yaxis_title='Count', template='plotly_dark')
+        fig = go.Figure(data=[go.Bar(x=cat_scope_count.values, y=cat_scope_count.index, orientation='h')])
+        fig.update_layout(title='Issue Distribution by CAT Scope', yaxis_title='CAT Scope', xaxis_title='Count', template='plotly_dark')
+        fig.update_traces(marker=dict(color=colors))
         st.plotly_chart(fig)
     elif insight == 'Issue Distribution by IT Portal / SR / CR':
         it_portal_count = df['IT Portal / SR / CR'].value_counts()
-        fig = go.Figure(data=[go.Bar(x=it_portal_count.index, y=it_portal_count.values)])
-        fig.update_layout(title='Issue Distribution by IT Portal / SR / CR', xaxis_title='IT Portal / SR / CR', yaxis_title='Count', template='plotly_dark')
+        fig = go.Figure(data=[go.Bar(x=it_portal_count.values, y=it_portal_count.index, orientation='h')])
+        fig.update_layout(title='Issue Distribution by IT Portal / SR / CR', yaxis_title='IT Portal / SR / CR', xaxis_title='Count', template='plotly_dark')
+        fig.update_traces(marker=dict(color=colors))
         st.plotly_chart(fig)
 
 def main():
     st.set_page_config(
         page_title="Dashboard",
-        page_icon=":bar_chart:",
+        page_icon=":traffic_light:",
         layout="wide",
         initial_sidebar_state="expanded",
     )
-    st.markdown("<style> footer {visibility: hidden;} </style>", unsafe_allow_html=True)
 
     projects = get_projects()
     if not projects:
@@ -192,37 +180,31 @@ def main():
         st.markdown('---')  # Add a horizontal line
 
         # Display Projects selected and Fix Version selected
-
-
-  # Center-aligned and styled subheader with rounded corner purple background
-        st.markdown(
-            f'<div style="background-color: purple; padding: 10px; border-radius: 10px; text-align:center;"><h3 style="color:white;"><b>Project Pulse: Jira Data</b></h3></div>',
-            unsafe_allow_html=True
-        )
-
-        # Projects selected and Fix Version selected in one row
+        st.write("# Dashboard")  # Title moved to top left
         st.markdown(
             f'<div style="display: flex; flex-wrap: wrap; gap: 10px;">'
-            f'<div style="background-color: orange; display: inline-block; padding: 5px 10px; border-radius: 5px;"><p style="color:white;"><b>Projects selected:</b> {", ".join([projects[key] for key in selected_project_keys])}</p></div>'
-            f'<div style="background-color: orange; display: inline-block; padding: 5px 10px; border-radius: 5px;"><p style="color:white;"><b>Fix Version selected:</b> {selected_fix_version}</p></div>'
+            f'<div><p style="color:black;"><b>Projects selected:</b> {", ".join([projects[key] for key in selected_project_keys])}</p></div>'
+            f'<div><p style="color:black;"><b>Fix Version selected:</b> {selected_fix_versions}</p></div>'
             f'</div>',
             unsafe_allow_html=True
         )
 
-
         # Display KPI Metrics
-        if 'Type' in df:
-            col1, col2, col3, col4 = st.columns(4)
-            col1.metric("Total issue count", df.shape[0])
+        col1, col2, col3, col4 = st.columns(4)
+        col1.metric("Total issue count", df.shape[0])
+        
+        if 'Type' in df.columns:  # Check if 'Type' column exists in the DataFrame
             col2.metric("Total Stories", df[df['Type'] == 'Story'].shape[0])
             col3.metric("Total Defects", df[df['Type'] == 'Defect'].shape[0])
             col4.metric("Total Epics", df[df['Type'] == 'Epic'].shape[0])
         else:
-            st.warning(f"No data found for the selected project(s): {', '.join([projects[key] for key in selected_project_keys])} and fix version '{selected_fix_version}'.")
-            return
+            col2.warning("No data available")
+            col3.warning("No data available")
+            col4.warning("No data available")
+
         # Display Dataframe
         st.subheader("Data Summary:")
-        st.write(df)
+        st.dataframe(df, width=700)  # Adjusted width to fit container in a column
 
         # Display Insights
         st.subheader("Insights:")
